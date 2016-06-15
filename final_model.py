@@ -191,6 +191,98 @@ shelter_test["AgeuponOutcome"] = shelter_test["AgeuponOutcome"].apply(age_group)
 shelter_train.drop("AnimalID", axis=1, inplace=True)
 shelter_test.drop("ID", axis=1, inplace=True)
 
+#aggressiveness based on breed type. Most dangerous breeds:
+# Pitbull (55-65 lbs), Rottweiler (100-130 lbs), Husky-type (66 lbs), German
+# Shepherd (100 lbs) , Alaskan Malamute (100 lbs), Doberman pinscher (65-90lbs),
+# chow chow (70 lbs), Great Danes (200pounds), Boxer (70 lbs), Akita (45 kg)
+def aggressive(breed):
+	if breed.find("Pit Bull") != -1:
+		return 1
+	elif breed.find("Rottweiler") != -1:
+		return 2#1
+	elif breed.find("Husky") != -1:
+		return 3#1
+	elif breed.find("Shepherd") != -1:
+		return 4#1
+	elif breed.find("Malamute") != -1:
+		return 5#1
+	elif breed.find("Doberman") != -1:
+		return 6#1
+	elif breed.find("Chow") != -1:
+		return 7#1
+	elif breed.find("Dane") != -1:
+		return 8#1
+	elif breed.find("Boxer") != -1:
+		return 9#1
+	elif breed.find("Akita") != -1:
+		return 10#1
+	else:
+		return 11#2
+
+shelter_train["Aggresiveness"] = shelter_train["Breed"].apply(aggressive)
+shelter_test["Aggresiveness"] = shelter_test["Breed"].apply(aggressive)
+
+#Most allergic breeds:
+#Akita, Alaskan Malamute, American Eskimo, Corgi, Chow-chow, German
+#Shepherd, Great Pyrenees, Labrador, Retriever, Husky
+def allergic(breed):
+	if breed.find("Akita") != -1:
+		return 1
+	elif breed.find("Malamute") != -1:
+		return 2#1
+	elif breed.find("Eskimo") != -1:
+		return 3#1
+	elif breed.find("Corgi") != -1:
+		return 4#1
+	elif breed.find("Chow") != -1:
+		return 5#1
+	elif breed.find("Shepherd") != -1:
+		return 6#1
+	elif breed.find("Pyrenees") != -1:
+		return 7#1
+	elif breed.find("Labrador") != -1:
+		return 8#1
+	elif breed.find("Retriever") != -1:
+		return 9#1
+	elif breed.find("Husky") != -1:
+		return 10#1
+	else:
+		return 11#2
+
+shelter_train["Allergic"] = shelter_train["Breed"].apply(allergic)
+shelter_test["Allergic"] = shelter_test["Breed"].apply(allergic)
+
+#weight based on breed type. Most dangerous breeds:
+# Below 100 lbs: Pitbull (55-65 lbs), Husky-type (66 lbs), Doberman pinscher (65-90lbs), Boxer (70 lbs), Akita (45 kg), chow chow (70 lbs)
+# Above 100 lbs: Rottweiler (100-130 lbs), German Shepherd (100 lbs), Alaskan Malamute (100 lbs), Great Danes (200pounds), 
+
+def weight(breed):
+	if breed.find("Pit Bull") != -1:
+		return 1
+	elif breed.find("Husky") != -1:
+		return 1
+	elif breed.find("Doberman") != -1:
+		return 1
+	elif breed.find("Boxer") != -1:
+		return 1
+	elif breed.find("Akita") != -1:
+		return 1
+	elif breed.find("Chow") != -1:
+		return 1
+	elif breed.find("Rottweiler") != -1:
+		return 2
+	elif breed.find("Shepherd") != -1:
+		return 2
+	elif breed.find("Malamute") != -1:
+		return 2
+	elif breed.find("Dane") != -1:
+		return 2
+	else:
+		return 2
+
+shelter_train["Weight"] = shelter_train["Breed"].apply(weight)
+shelter_test["Weight"] = shelter_test["Breed"].apply(weight)
+
 #fetch breed type
 def breed_group(breed_input):
 	breed = str(breed_input)
@@ -251,7 +343,7 @@ print(shelter_train.head())
 #### PCA
 #########################################################################################################
 # from sklearn.decomposition import PCA
-# n = 9
+# n = 14
 # pca_train = PCA(n_components=n)
 # pca_test = PCA(n_components=n)
 # pca_train.fit(shelter_train)
@@ -282,9 +374,15 @@ print(shelter_train.head())
 model_train = shelter_train
 model_test = shelter_test
 
-#split test and train
+#split test and train randomly
 from sklearn.cross_validation import train_test_split
 X_train, X_val, y_train, y_val = train_test_split(model_train, train_outcome, test_size=0.3)
+
+# #split test fixed
+# X_train = model_train[0:20000]
+# y_train = train_outcome[0:20000]
+# X_val = model_train[20000:26729]
+# y_val = train_outcome[20000:26729]
 
 #########################################################################################################
 #### Prediction Model
@@ -302,7 +400,7 @@ classifiers = [
     # SVC(max_iter=100, probability=True, kernel='rbf', degree=10),
     # SVC(gamma=2, C=1),
     # DecisionTreeClassifier(max_depth=3),
-    # RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+    # RandomForestClassifier(max_depth=5, n_estimators=500, max_features=1),
     # AdaBoostClassifier(),
     # GaussianNB(),
     # QuadraticDiscriminantAnalysis(),
@@ -348,7 +446,51 @@ results["Euthanasia"] = y_probs[:,2]
 results["Return_to_owner"] = y_probs[:,3]
 results["Transfer"] = y_probs[:,4]
 
-results.to_csv("withpca_add.csv",index = False)
+results.to_csv("weight_aggressive_allergic.csv",index = False)
+
+#########################################################################################################
+#### Plotting Result
+#########################################################################################################
+
+import seaborn as sns 
+import matplotlib.pyplot as plt 
+
+#plot importance
+plt.figure(0)
+plt.title("Feature Importance")
+print(log.feature_importances_)
+print(shelter_train.columns)
+importance = log.feature_importances_
+sns.barplot(y=shelter_train.columns, x=importance)
+
+# plot shelter train correlation
+axis = {
+		"AnimalType",
+		"AgeuponOutcome",
+		"Breed",
+		"Color",
+		"Year",
+		"Month",
+		"Day",
+		"Hour",
+		"Minute",
+		"Virginity",
+		"Sex",
+		"has_name",
+		"Aggresiveness",
+		"Allergic",
+		"Weight" 
+		}
+count = 1
+for ax in axis:
+	x = shelter_train[ax]
+	y = train_outcome
+	plt.figure(count)
+	plt.title(ax)
+	sns.countplot(x=x, hue=y)
+	count = count + 1
+
+plt.show()
 
 #########################################################################################################
 #### Reference
